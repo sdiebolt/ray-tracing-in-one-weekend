@@ -7,8 +7,8 @@ pub type Color = Vector3<f64>;
 pub fn write_color(color: &Color) {
     println!(
         "{} {} {}",
-        (255.999 * color[0]) as u8,
-        (255.999 * color[1]) as u8,
-        (255.999 * color[2]) as u8
+        (256.0 * color[0].clamp(0.0, 0.999)) as u8,
+        (256.0 * color[1].clamp(0.0, 0.999)) as u8,
+        (256.0 * color[2].clamp(0.0, 0.999)) as u8
     )
 }

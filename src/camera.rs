@@ -13,6 +13,7 @@ use crate::ray::Ray;
 pub struct Camera {
     image_width: u64,
     image_height: u64,
+    samples_per_pixel: u64,
     center: Point3<f64>,
     pixel00_loc: Point3<f64>,
     pixel_delta_u: Vector3<f64>,
@@ -20,7 +21,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f64, image_width: u64) -> Self {
+    pub fn new(aspect_ratio: f64, image_width: u64, samples_per_pixel: u64) -> Self {
         // We need to ensure that the image height is at least 1.
         let image_height = cmp::max(1, (image_width as f64 / aspect_ratio) as u64);
 
@@ -45,9 +46,10 @@ impl Camera {
             center - viewport_u / 2.0 - viewport_v / 2.0 - Vector3::new(0.0, 0.0, focal_length);
         let pixel00_loc = viewport_upper_left + (pixel_delta_u + pixel_delta_v) * 0.5;
 
-        Camera {
+        Self {
             image_width,
             image_height,
+            samples_per_pixel,
             center,
             pixel00_loc,
             pixel_delta_u,
@@ -62,18 +64,36 @@ impl Camera {
         let pb = ProgressBar::new(self.image_width * self.image_height);
         for j in 0..self.image_height {
             for i in 0..self.image_width {
-                let pixel_center = self.pixel00_loc
-                    + (self.pixel_delta_u * i as f64)
-                    + (self.pixel_delta_v * j as f64);
-                let ray_direction = pixel_center - self.center;
-                let r = Ray::new(self.center, ray_direction);
+                let mut pixel_color = Color::new(0.0, 0.0, 0.0);
+                for _ in 0..self.samples_per_pixel {
+                    let r = self.get_ray(i, j);
+                    pixel_color += Self::ray_color(&r, world);
+                }
 
-                let pixel_color = Camera::ray_color(&r, world);
-
-                write_color(&pixel_color);
+                write_color(&(pixel_color / self.samples_per_pixel as f64));
                 pb.inc(1);
             }
         }
+    }
+
+    /// Construct a camera ray originating from the origin and directed at randomly
+    /// sampled point around the pixel location i, j.
+    fn get_ray(&self, i: u64, j: u64) -> Ray {
+        let offset = Self::sample_square();
+        let pixel_sample = self.pixel00_loc
+            + (i as f64 + offset.x) * self.pixel_delta_u
+            + (j as f64 + offset.y) * self.pixel_delta_v;
+
+        Ray::new(self.center, pixel_sample - self.center)
+    }
+
+    // Returns the vector to a random point in the [-.5, -.5] - [+.5, +.5] unit square.
+    fn sample_square() -> Vector3<f64> {
+        Vector3::new(
+            rand::random::<f64>() - 0.6,
+            rand::random::<f64>() - 0.5,
+            0.0,
+        )
     }
 
     /// Compute the color from a ray.

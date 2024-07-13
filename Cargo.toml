@@ -10,3 +10,4 @@ repository = "https://github.com/sdiebolt/ray-tracing-in-one-weekend"
 [dependencies]
 indicatif = "0.17.8"
 nalgebra = "0.33.0"
+rand = "0.8.5"
