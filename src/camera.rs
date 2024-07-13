@@ -99,11 +99,38 @@ impl Camera {
     /// Compute the color from a ray.
     fn ray_color(r: &Ray, world: &dyn Hittable) -> Color {
         if let Some(rec) = world.hit(r, Interval::new(0.0, f64::INFINITY)) {
-            return (rec.normal + Color::new(1.0, 1.0, 1.0)) * 0.5;
+            let direction = Self::random_vector_on_hemisphere(rec.normal);
+            return 0.5 * Self::ray_color(&Ray::new(rec.p, direction), world);
         }
 
         let unit_direction = r.direction().normalize();
         let a = (unit_direction.y + 1.0) / 2.0;
         return Color::new(1.0, 1.0, 1.0) * (1.0 - a) + Color::new(0.5, 0.7, 1.0) * a;
+    }
+
+    /// Generate a random vector on the unit sphere.
+    /// See https://mathworld.wolfram.com/SpherePointPicking.html for more information.
+    fn random_vector_on_unit_sphere() -> Vector3<f64> {
+        let u = rand::random::<f64>();
+        let v = rand::random::<f64>();
+        let theta = 2.0 * u * std::f64::consts::PI;
+        let phi = f64::acos(2.0 * v - 1.0);
+        let sin_theta = f64::sin(theta);
+        let cos_theta = f64::cos(theta);
+        let sin_phi = f64::sin(phi);
+        let cos_phi = f64::cos(phi);
+
+        Vector3::new(sin_phi * cos_theta, sin_phi * sin_theta, cos_phi)
+    }
+
+    fn random_vector_on_hemisphere(normal: Vector3<f64>) -> Vector3<f64> {
+        let random_vector = Self::random_vector_on_unit_sphere();
+        if random_vector.dot(&normal) > 0.0 {
+            // The random vector is in the same hemisphere as the normal.
+            return random_vector;
+        } else {
+            // The random vector is in the opposite hemisphere as the normal.
+            return -random_vector;
+        }
     }
 }
