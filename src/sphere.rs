@@ -1,24 +1,28 @@
-use crate::hittable::{HitRecord, Hittable};
-use crate::interval::Interval;
-use crate::ray::Ray;
 extern crate nalgebra as na;
 use na::{Point3, Vector3};
 
-pub struct Sphere {
+use crate::hittable::{HitRecord, Hittable};
+use crate::interval::Interval;
+use crate::material::Material;
+use crate::ray::Ray;
+
+pub struct Sphere<M: Material> {
     center: Point3<f64>,
     radius: f64,
+    material: M,
 }
 
-impl Sphere {
-    pub fn new(center: Point3<f64>, radius: f64) -> Sphere {
+impl<M: Material> Sphere<M> {
+    pub fn new(center: Point3<f64>, radius: f64, material: M) -> Sphere<M> {
         Sphere {
             center,
             radius: radius.max(0.0),
+            material,
         }
     }
 }
 
-impl Hittable for Sphere {
+impl<M: Material> Hittable for Sphere<M> {
     fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord> {
         let oc = self.center - r.origin();
         let a = r.direction().norm_squared();
@@ -45,6 +49,7 @@ impl Hittable for Sphere {
             t: root,
             p: r.at(root),
             normal: Vector3::new(0.0, 0.0, 0.0),
+            material: &self.material,
             front_face: false,
         };
         rec.set_face_normal(r, &((rec.p - self.center) / self.radius));

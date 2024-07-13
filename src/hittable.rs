@@ -1,16 +1,19 @@
-use crate::interval::Interval;
-use crate::ray::Ray;
 extern crate nalgebra as na;
 use na::{Point3, Vector3};
 
-pub struct HitRecord {
+use crate::interval::Interval;
+use crate::material::Material;
+use crate::ray::Ray;
+
+pub struct HitRecord<'a> {
     pub p: Point3<f64>,
     pub normal: Vector3<f64>,
+    pub material: &'a dyn Material,
     pub t: f64,
     pub front_face: bool,
 }
 
-impl HitRecord {
+impl HitRecord<'_> {
     /// Sets the hit record's normal vector based on the given ray and outward normal.
     /// NOTE: the parameter `outward_normal` is assumed to have unit length.
     pub fn set_face_normal(&mut self, r: &Ray, outward_normal: &Vector3<f64>) {
