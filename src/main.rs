@@ -13,7 +13,7 @@ mod sphere;
 use camera::Camera;
 use color::Color;
 use hittable_list::HittableList;
-use material::{Dielectric, Lambertian, Metal};
+use material::Lambertian;
 use sphere::Sphere;
 
 /// Aspect ratio.
@@ -28,42 +28,36 @@ const SAMPLES_PER_PIXEL: u64 = 100;
 /// Maximum depth of the ray bouncing.
 const MAX_DEPTH: u64 = 50;
 
+/// Vertical field of view in degrees.
+const VFOV: f64 = 90.0;
+
 fn main() {
     // The world contains two spheres: one in the center and one serving as a green
     // ground.
     let mut world = HittableList::new();
-    let material_ground = Lambertian::new(Color::new(0.8, 0.8, 0.0));
-    let material_center = Lambertian::new(Color::new(0.1, 0.2, 0.5));
-    let material_left = Dielectric::new(1.5);
-    let material_bubble = Dielectric::new(1.0 / 1.5);
-    let material_right = Metal::new(Color::new(0.8, 0.6, 0.2), 1.0);
+
+    let r = f64::cos(std::f64::consts::PI / 4.0);
+
+    let material_left = Lambertian::new(Color::new(0.0, 0.0, 1.0));
+    let material_right = Lambertian::new(Color::new(1.0, 0.0, 0.0));
 
     world.push(Box::new(Sphere::new(
-        Point3::new(0.0, -100.5, -1.0),
-        100.0,
-        material_ground,
-    )));
-    world.push(Box::new(Sphere::new(
-        Point3::new(0.0, 0.0, -1.2),
-        0.5,
-        material_center,
-    )));
-    world.push(Box::new(Sphere::new(
-        Point3::new(-1.0, 0.0, -1.0),
-        0.5,
+        Point3::new(-r, 0.0, -1.0),
+        r,
         material_left,
     )));
     world.push(Box::new(Sphere::new(
-        Point3::new(-1.0, 0.0, -1.0),
-        0.4,
-        material_bubble,
-    )));
-    world.push(Box::new(Sphere::new(
-        Point3::new(1.0, 0.0, -1.0),
-        0.5,
+        Point3::new(r, 0.0, -1.0),
+        r,
         material_right,
     )));
 
-    let camera = Camera::new(ASPECT_RATIO, IMAGE_WIDTH, SAMPLES_PER_PIXEL, MAX_DEPTH);
+    let camera = Camera::new(
+        ASPECT_RATIO,
+        IMAGE_WIDTH,
+        SAMPLES_PER_PIXEL,
+        MAX_DEPTH,
+        VFOV,
+    );
     camera.render(&world);
 }

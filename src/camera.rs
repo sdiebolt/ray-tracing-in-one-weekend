@@ -15,6 +15,7 @@ pub struct Camera {
     image_height: u64,
     samples_per_pixel: u64,
     max_depth: u64,
+    vfov: f64,
     center: Point3<f64>,
     pixel00_loc: Point3<f64>,
     pixel_delta_u: Vector3<f64>,
@@ -27,6 +28,7 @@ impl Camera {
         image_width: u64,
         samples_per_pixel: u64,
         max_depth: u64,
+        vfov: f64,
     ) -> Self {
         // We need to ensure that the image height is at least 1.
         let image_height = cmp::max(1, (image_width as f64 / aspect_ratio) as u64);
@@ -34,9 +36,11 @@ impl Camera {
         let center = Point3::new(0.0, 0.0, 0.0);
 
         // Determine viewport dimensions.
-        let focal_length: f64 = 1.0;
-        let viewport_height: f64 = 2.0;
-        let viewport_width: f64 = viewport_height * (image_width as f64 / image_height as f64);
+        let focal_length = 1.0;
+        let theta = vfov.to_radians();
+        let h = f64::tan(theta / 2.0);
+        let viewport_height = 2.0 * h * focal_length;
+        let viewport_width = viewport_height * (image_width as f64 / image_height as f64);
 
         // Calculate the vectors across the horizontal and down the vertical viewport
         // edges.
@@ -57,6 +61,7 @@ impl Camera {
             image_height,
             samples_per_pixel,
             max_depth,
+            vfov,
             center,
             pixel00_loc,
             pixel_delta_u,
