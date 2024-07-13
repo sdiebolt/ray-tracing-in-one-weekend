@@ -1,44 +1,39 @@
 use std::cmp;
 
-use indicatif::ProgressBar;
-
-mod color;
-use color::{write_color, Color};
-mod ray;
-use ray::Ray;
-
 extern crate nalgebra as na;
 use na::{Point3, Vector3};
 
-// Image size.
+use indicatif::ProgressBar;
+
+mod color;
+mod hittable;
+mod hittable_list;
+mod interval;
+mod ray;
+mod sphere;
+
+use color::{write_color, Color};
+use hittable::Hittable;
+use hittable_list::HittableList;
+use interval::Interval;
+use ray::Ray;
+use sphere::Sphere;
+
+/// Aspect ratio.
 const ASPECT_RATIO: f64 = 16.0 / 9.0;
+
+/// Image width. The image height will be calculated based on the aspect ratio.
 const IMAGE_WIDTH: u64 = 400;
 
-fn hit_sphere(center: &Point3<f64>, radius: f64, r: &Ray) -> f64 {
-    let oc = center - r.origin();
-    let a = r.direction().norm_squared();
-    let b = -2.0 * r.direction().dot(&oc);
-    let c = oc.norm_squared() - radius * radius;
-    let discriminant = b * b - 4.0 * a * c;
-
-    if discriminant < 0.0 {
-        return -1.0;
-    } else {
-        return (-b - discriminant.sqrt()) / (2.0 * a);
-    }
-}
-
-fn ray_color(r: &Ray) -> Color {
-    let t = hit_sphere(&Point3::new(0.0, 0.0, -1.0), 0.5, r);
-
-    if t > 0.0 {
-        let n = (r.at(t) - Point3::new(0.0, 0.0, -1.0)).normalize();
-        return 0.5 * Color::new(n.x + 1.0, n.y + 1.0, n.z + 1.0);
+/// Compute the color from a ray.
+fn ray_color(r: &Ray, world: &dyn Hittable) -> Color {
+    if let Some(rec) = world.hit(r, Interval::new(0.0, f64::INFINITY)) {
+        return (rec.normal + Color::new(1.0, 1.0, 1.0)) * 0.5;
     }
 
     let unit_direction = r.direction().normalize();
-    let a = 0.5 * (unit_direction.y + 1.0);
-    (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+    let a = (unit_direction.y + 1.0) / 2.0;
+    return Color::new(1.0, 1.0, 1.0) * (1.0 - a) + Color::new(0.5, 0.7, 1.0) * a;
 }
 
 fn main() {
@@ -50,6 +45,12 @@ fn main() {
     let viewport_height: f64 = 2.0;
     let viewport_width: f64 = viewport_height * (IMAGE_WIDTH as f64 / image_height as f64);
     let camera_center = Point3::new(0.0, 0.0, 0.0);
+
+    // The world contains two spheres: one in the center and one serving as a green
+    // ground.
+    let mut world = HittableList::new();
+    world.push(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
+    world.push(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
 
     // Calculate the vectors across the horizontal and down the vertical viewport edges.
     let viewport_u = Vector3::new(viewport_width, 0.0, 0.0);
@@ -74,7 +75,7 @@ fn main() {
             let ray_direction = pixel_center - camera_center;
             let r = Ray::new(camera_center, ray_direction);
 
-            let pixel_color = ray_color(&r);
+            let pixel_color = ray_color(&r, &world);
 
             write_color(&pixel_color);
             pb.inc(1);
