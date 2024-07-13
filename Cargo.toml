@@ -1,0 +1,11 @@
+[package]
+name = "ray-tracing-in-one-weekend"
+version = "0.1.0"
+authors = ["Samuel Le Meur-Diebolt"]
+edition = "2021"
+description = """\
+    Rust implementation of the \"Ray Tracing in One Weekend\" book by Peter Shirley."""
+repository = "https://github.com/sdiebolt/ray-tracing-in-one-weekend"
+
+[dependencies]
+indicatif = "0.17.8"
