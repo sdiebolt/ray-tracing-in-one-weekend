@@ -22,6 +22,9 @@ const IMAGE_WIDTH: u64 = 400;
 /// Count of random samples for each pixel.
 const SAMPLES_PER_PIXEL: u64 = 100;
 
+/// Maximum depth of the ray bouncing.
+const MAX_DEPTH: u64 = 50;
+
 fn main() {
     // The world contains two spheres: one in the center and one serving as a green
     // ground.
@@ -29,6 +32,6 @@ fn main() {
     world.push(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
     world.push(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
 
-    let camera = Camera::new(ASPECT_RATIO, IMAGE_WIDTH, SAMPLES_PER_PIXEL);
+    let camera = Camera::new(ASPECT_RATIO, IMAGE_WIDTH, SAMPLES_PER_PIXEL, MAX_DEPTH);
     camera.render(&world);
 }

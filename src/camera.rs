@@ -14,6 +14,7 @@ pub struct Camera {
     image_width: u64,
     image_height: u64,
     samples_per_pixel: u64,
+    max_depth: u64,
     center: Point3<f64>,
     pixel00_loc: Point3<f64>,
     pixel_delta_u: Vector3<f64>,
@@ -21,7 +22,12 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f64, image_width: u64, samples_per_pixel: u64) -> Self {
+    pub fn new(
+        aspect_ratio: f64,
+        image_width: u64,
+        samples_per_pixel: u64,
+        max_depth: u64,
+    ) -> Self {
         // We need to ensure that the image height is at least 1.
         let image_height = cmp::max(1, (image_width as f64 / aspect_ratio) as u64);
 
@@ -50,6 +56,7 @@ impl Camera {
             image_width,
             image_height,
             samples_per_pixel,
+            max_depth,
             center,
             pixel00_loc,
             pixel_delta_u,
@@ -67,7 +74,7 @@ impl Camera {
                 let mut pixel_color = Color::new(0.0, 0.0, 0.0);
                 for _ in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
-                    pixel_color += Self::ray_color(&r, world);
+                    pixel_color += Self::ray_color(&r, self.max_depth, world);
                 }
 
                 write_color(&(pixel_color / self.samples_per_pixel as f64));
@@ -97,10 +104,15 @@ impl Camera {
     }
 
     /// Compute the color from a ray.
-    fn ray_color(r: &Ray, world: &dyn Hittable) -> Color {
+    fn ray_color(r: &Ray, depth: u64, world: &dyn Hittable) -> Color {
+        // If we've exceeded the ray bounce limit, no more light is gathered.
+        if depth == 0 {
+            return Color::new(0.0, 0.0, 0.0);
+        }
+
         if let Some(rec) = world.hit(r, Interval::new(0.0, f64::INFINITY)) {
             let direction = Self::random_vector_on_hemisphere(rec.normal);
-            return 0.5 * Self::ray_color(&Ray::new(rec.p, direction), world);
+            return 0.5 * Self::ray_color(&Ray::new(rec.p, direction), depth - 1, world);
         }
 
         let unit_direction = r.direction().normalize();
