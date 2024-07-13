@@ -26,6 +26,14 @@ fn reflect(v: &Vector3<f64>, n: &Vector3<f64>) -> Vector3<f64> {
     v - 2.0 * v.dot(n) * n
 }
 
+#[inline]
+fn refract(uv: &Vector3<f64>, n: &Vector3<f64>, etai_over_etat: f64) -> Vector3<f64> {
+    let cos_theta = (-uv.dot(n)).min(1.0);
+    let r_out_perp = etai_over_etat * (uv + cos_theta * n);
+    let r_out_parallel = -(1.0 - r_out_perp.norm_squared()).abs().sqrt() * n;
+    r_out_perp + r_out_parallel
+}
+
 pub trait Material {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Color)>;
 }
@@ -81,5 +89,35 @@ impl Material for Metal {
         } else {
             None
         }
+    }
+}
+
+pub struct Dielectric {
+    /// Refractive index in vacuum or air, or the ratio of the material's refractive
+    /// index over the refractive index of the enclosing media.
+    refaction_index: f64,
+}
+
+impl Dielectric {
+    pub fn new(refaction_index: f64) -> Dielectric {
+        Dielectric { refaction_index }
+    }
+}
+
+impl Material for Dielectric {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Color)> {
+        let attenuation = Color::new(1.0, 1.0, 1.0);
+        let refraction_ratio = if rec.front_face {
+            1.0 / self.refaction_index
+        } else {
+            self.refaction_index
+        };
+
+        let unit_direction = r_in.direction().normalize();
+        let refacted = refract(&unit_direction, &rec.normal, refraction_ratio);
+
+        let scattered = Ray::new(rec.p, refacted);
+
+        Some((scattered, attenuation))
     }
 }

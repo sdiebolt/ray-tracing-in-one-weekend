@@ -13,7 +13,7 @@ mod sphere;
 use camera::Camera;
 use color::Color;
 use hittable_list::HittableList;
-use material::{Lambertian, Metal};
+use material::{Dielectric, Lambertian, Metal};
 use sphere::Sphere;
 
 /// Aspect ratio.
@@ -34,7 +34,7 @@ fn main() {
     let mut world = HittableList::new();
     let material_ground = Lambertian::new(Color::new(0.8, 0.8, 0.0));
     let material_center = Lambertian::new(Color::new(0.1, 0.2, 0.5));
-    let material_left = Metal::new(Color::new(0.8, 0.8, 0.8), 0.3);
+    let material_left = Dielectric::new(1.5);
     let material_right = Metal::new(Color::new(0.8, 0.6, 0.2), 1.0);
 
     world.push(Box::new(Sphere::new(
