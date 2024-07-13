@@ -111,7 +111,7 @@ impl Camera {
         }
 
         if let Some(rec) = world.hit(r, Interval::new(0.001, f64::INFINITY)) {
-            let direction = Self::random_vector_on_hemisphere(rec.normal);
+            let direction = rec.normal + Self::random_vector_on_unit_sphere();
             return 0.5 * Self::ray_color(&Ray::new(rec.p, direction), depth - 1, world);
         }
 
@@ -133,16 +133,5 @@ impl Camera {
         let cos_phi = f64::cos(phi);
 
         Vector3::new(sin_phi * cos_theta, sin_phi * sin_theta, cos_phi)
-    }
-
-    fn random_vector_on_hemisphere(normal: Vector3<f64>) -> Vector3<f64> {
-        let random_vector = Self::random_vector_on_unit_sphere();
-        if random_vector.dot(&normal) > 0.0 {
-            // The random vector is in the same hemisphere as the normal.
-            return random_vector;
-        } else {
-            // The random vector is in the opposite hemisphere as the normal.
-            return -random_vector;
-        }
     }
 }
