@@ -40,6 +40,12 @@ const LOOKAT: Point3<f64> = Point3::new(0.0, 0.0, -1.0);
 /// Camera-relative "up" direction.
 const VUP: na::Vector3<f64> = na::Vector3::new(0.0, 1.0, 0.0);
 
+/// Variation angle of rays through each pixel.
+const DEFOCUS_ANGLE: f64 = 10.0;
+
+/// Distance from the camera lookfrom point to the focal plane.
+const FOCUS_DISTANCE: f64 = 3.4;
+
 fn main() {
     // The world contains two spheres: one in the center and one serving as a green
     // ground.
@@ -86,6 +92,8 @@ fn main() {
         LOOKFROM,
         LOOKAT,
         VUP,
+        DEFOCUS_ANGLE,
+        FOCUS_DISTANCE,
     );
     camera.render(&world);
 }
