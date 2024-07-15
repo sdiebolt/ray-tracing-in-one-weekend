@@ -26,6 +26,6 @@ impl HitRecord<'_> {
     }
 }
 
-pub trait Hittable {
+pub trait Hittable: std::marker::Sync {
     fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord>;
 }

@@ -1,4 +1,7 @@
+use rayon::prelude::*;
 use std::cmp;
+
+use console::{style, Emoji};
 
 extern crate nalgebra as na;
 use na::{Point3, Vector3};
@@ -128,19 +131,42 @@ impl Camera {
     pub fn render(&self, world: &dyn Hittable) {
         println!("P3\n{} {}\n255", self.image_width, self.image_height);
 
-        let pb = ProgressBar::new(self.image_width * self.image_height);
-        for j in 0..self.image_height {
-            for i in 0..self.image_width {
-                let mut pixel_color = Color::new(0.0, 0.0, 0.0);
-                for _ in 0..self.samples_per_pixel {
-                    let r = self.get_ray(i, j);
-                    pixel_color += Self::ray_color(&r, self.max_depth, world);
-                }
+        eprintln!(
+            "{} {} Casting rays...",
+            style("[1/2]").bold().dim(),
+            Emoji("⚡", "")
+        );
+        let pb = ProgressBar::new(self.image_width * self.image_height * self.samples_per_pixel);
+        let image = (0..self.image_height)
+            .into_par_iter()
+            .flat_map(|j| {
+                (0..self.image_width)
+                    .map(|i| {
+                        (0..self.samples_per_pixel)
+                            .map(|_| {
+                                let r = self.get_ray(i, j);
+                                pb.inc(1);
+                                Self::ray_color(&r, self.max_depth, world)
+                            })
+                            .sum::<Color>()
+                            / self.samples_per_pixel as f64
+                    })
+                    .collect::<Vec<Color>>()
+            })
+            .collect::<Vec<Color>>();
+        pb.finish_and_clear();
 
-                write_color(&(pixel_color / self.samples_per_pixel as f64));
-                pb.inc(1);
-            }
+        eprintln!(
+            "{} {} Creating image file...",
+            style("[2/2]").bold().dim(),
+            Emoji("📁", "")
+        );
+        let pb = ProgressBar::new(self.image_width * self.image_height);
+        for col in image {
+            write_color(&col);
+            pb.inc(1);
         }
+        pb.finish_and_clear();
     }
 
     /// Construct a camera ray originating from the defocus disk and directed at a

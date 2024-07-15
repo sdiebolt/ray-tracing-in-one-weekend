@@ -8,6 +8,8 @@ description = """\
 repository = "https://github.com/sdiebolt/ray-tracing-in-one-weekend"
 
 [dependencies]
+console = "0.15.8"
 indicatif = "0.17.8"
 nalgebra = { version = "0.33.0", features = ["rand"] }
 rand = "0.8.5"
+rayon = "1.10.0"

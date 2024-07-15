@@ -22,7 +22,7 @@ impl<M: Material> Sphere<M> {
     }
 }
 
-impl<M: Material> Hittable for Sphere<M> {
+impl<M: Material + std::marker::Sync> Hittable for Sphere<M> {
     fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord> {
         let oc = self.center - r.origin();
         let a = r.direction().norm_squared();
